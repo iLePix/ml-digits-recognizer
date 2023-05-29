@@ -8,6 +8,7 @@ mod input;
 mod render;
 mod net;
 mod activation;
+mod cost;
 
 use render::Renderer;
 use input::InputHandler;
