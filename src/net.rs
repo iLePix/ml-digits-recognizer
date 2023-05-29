@@ -1,19 +1,27 @@
+use std::array;
+
 use rand::{Rng, rngs::ThreadRng};
 
-use crate::{IMAGE_HEIGHT, IMAGE_WIDTH};
+use crate::{IMAGE_HEIGHT, IMAGE_WIDTH, activation::{Activation, self}};
 
 
 pub struct Net {
+    activation: Activation,
     layers: Vec<Layer>,
 }
 
 impl Net {
-    pub fn new(layer_sizes: &[usize]) -> Self {
+    pub fn new(layer_sizes: &[usize], activation: Activation) -> Self {
         let mut rng = rand::thread_rng();
         let layers = layer_sizes.windows(2)
             .map(|sizes| Layer::new(sizes[0], sizes[1], &mut rng))
             .collect();
-        Self { layers }
+        Self { layers, activation }
+    }
+    
+    //running the inputs through the neural net and returning the outputs
+    pub fn think(inputs: &[f32]) -> &[f32] {
+        inputs
     }
 }
 
@@ -44,18 +52,39 @@ impl Axon {
 pub struct Layer {
     out_nodes_num: usize,
     in_nodes_num: usize,
-    axons: Vec<Axon>
+    weights: Vec<f32>,
+    biases: Vec<f32>,
 }
 
 impl Layer {
     pub fn new(in_nodes_num: usize, out_nodes_num: usize, rng: &mut ThreadRng) -> Self {
-        let axons = (0.. in_nodes_num * out_nodes_num)
-            .map(|_| Axon::from_rng(rng))
+        let weights = (0..in_nodes_num * out_nodes_num)
+            .map(|_| rng.gen_range(0.0..=1.0)) 
+            .collect();
+        
+        let biases = (0..in_nodes_num * out_nodes_num)
+            .map(|_| rng.gen_range(0.0..=1.0)) 
             .collect();
         Self {
             in_nodes_num,
             out_nodes_num,
-            axons
+            weights,
+            biases
        } 
+    }
+
+    fn get_weight(&self, in_node: usize, out_node: usize) -> f32 {
+        self.weights[out_node * self.in_nodes_num + in_node]
+    }
+
+    pub fn calculate_outputs(&self, inputs: &[f32]) -> Vec<f32> {
+        let outputs = Vec::with_capacity(self.out_nodes_num);
+        for out_node in 0..self.out_nodes_num {
+            let mut weighted_output = self.biases[out_node];
+            for in_node in 0..self.in_nodes_num {
+               weighted_output += self.get_weight(in_node, out_node) * inputs[in_node];  
+            }
+        }
+        outputs
     }
 }

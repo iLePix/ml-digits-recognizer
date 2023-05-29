@@ -30,6 +30,11 @@ impl Renderer {
         }
     }
 
+    pub fn draw_border(&mut self) {
+        self.canvas.set_draw_color(Color::RED);
+        self.canvas.fill_rect(Rect::new(0, 561, 560, 3)).unwrap();
+    } 
+
     pub fn start_frame(&mut self) {
         self.canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.canvas.clear();

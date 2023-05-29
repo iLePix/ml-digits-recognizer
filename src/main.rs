@@ -7,6 +7,7 @@
 mod input;
 mod render;
 mod net;
+mod activation;
 
 use render::Renderer;
 use input::InputHandler;
@@ -21,6 +22,7 @@ use crate::input::Control;
 
 pub const IMAGE_HEIGHT: usize = 28;
 pub const IMAGE_WIDTH: usize = 28;
+pub const DRAWING_INCREMENT: u8 = 5;
 
 struct Images {
     pub amount: u32,
@@ -72,6 +74,7 @@ fn main() -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
     let image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
     let mut window_size = Vec2u::new(560, 660);
+    let drawing_space = Vec2u::fill(560);
     let window = video_subsystem.window("ML-Digit-Recognizer", window_size.x, window_size.y)
         .position_centered()
         .build()
@@ -107,15 +110,8 @@ fn main() -> Result<(), String> {
             drawing = [0; IMAGE_WIDTH * IMAGE_HEIGHT];
         }
 
-        if drawing_mode && inputs.mouse_pos.x <= 560 {
-            let pos = inputs.mouse_pos / Vec2u::fill(tile_size);
-            let step = 5;
-            let mut tile = drawing.get_mut(pos.x as usize + pos.y as usize * IMAGE_WIDTH).unwrap();
-            if inputs.left_click && *tile <= 255 - step {
-                *tile += 5;
-            } else if inputs.right_click && *tile >= step {
-                *tile -= 5;
-            }
+        if drawing_mode {
+            draw(&mut drawing, tile_size, drawing_space, &inputs) 
         }
 
         renderer.start_frame();
@@ -124,6 +120,7 @@ fn main() -> Result<(), String> {
         } else {
             renderer.draw_digit(&images.get(cnt as usize).0);
         }
+        renderer.draw_border();
         renderer.end_frame();
 
         if !drawing_mode && cooldown == 0.0 {
@@ -141,6 +138,19 @@ fn main() -> Result<(), String> {
         //inputs.mouse_up(Right);
     }
     Ok(())
+}
+
+fn draw(drawing: &mut[u8], tile_size: u32, drawing_space: Vec2u, inputs: &InputHandler) {
+    if inputs.mouse_pos.x > drawing_space.x || inputs.mouse_pos.y > drawing_space.y {
+        return
+    }
+    let pos = inputs.mouse_pos / Vec2u::fill(tile_size);
+    let tile = drawing.get_mut(pos.x as usize + pos.y as usize * IMAGE_WIDTH).unwrap();
+    if inputs.left_click && *tile <= 255 - DRAWING_INCREMENT {
+                *tile += 5;
+    } else if inputs.right_click && *tile >= DRAWING_INCREMENT {
+                *tile -= 5;
+    }
 }
 
 
